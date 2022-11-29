@@ -22,7 +22,7 @@ export async function getPartName() {
   let name = await vscode.window.showInputBox(
     {
       placeHolder: "<part_file_name> or <path/to/part_file>",
-      prompt: "Enter the part file name. If the name contains `/`, subdirectory will be created.",
+      prompt: "Enter the part file name. If the name contains `/`, a subdirectory will be created. The new file will be created relative to the currently selected file directory",
       validateInput: (name) => {
         if (name.includes("..")) {
           return {

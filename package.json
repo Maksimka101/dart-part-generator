@@ -5,10 +5,11 @@
   "repository": {
     "url": "https://github.com/Maksimka101/dart-part-generator"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.73.0"
   },
+  "publisher": "ZemlyanikinMaksim",
   "categories": [
     "Snippets",
     "Programming Languages"
