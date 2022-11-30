@@ -90,16 +90,23 @@ export async function updateOriginalFile(originalFileUri: vscode.Uri, partName: 
   let file = await fs.promises.open(originalFileUri.fsPath, 'w')
 
   let lastPartLine = 0
+  let lastImportIsAPart = false
   for (let i = 0; i < fileLines.length; i++) {
     let currentString = fileLines[i].trim()
-    if (currentString.startsWith('import') || currentString.startsWith('part')) {
+    if (currentString.startsWith('import')) {
       lastPartLine = i
+    } else if (currentString.startsWith('part')) {
+      lastPartLine = i
+      lastImportIsAPart = true
     }
   }
 
   let partToInclude = `part '${partName}';`
   for (let i = 0; i < lastPartLine + 1; i++) {
     await file.appendFile(`${fileLines[i]}\n`)
+  }
+  if (!lastImportIsAPart) {
+    await file.appendFile("\n")
   }
   await file.appendFile(`${partToInclude}\n`)
   for (let i = lastPartLine + 1; i < fileLines.length - 1; i++) {
