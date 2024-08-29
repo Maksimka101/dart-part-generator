@@ -18,27 +18,24 @@ export function workingDirectoryUriFromFile(file: vscode.Uri) {
   return vscode.Uri.file(path.dirname(file.fsPath))
 }
 
-export async function getPartName() {
+export async function getFileName(isPart: boolean) {
+  let filePathPrefix = isPart ? "part_" : ""
+  let filePrefix = isPart ? "part " : ""
   let name = await vscode.window.showInputBox(
     {
-      placeHolder: "<part_file_name> or <path/to/part_file>",
-      prompt: "Enter the part file name. If the name contains `/`, a subdirectory will be created. The new file will be created relative to the currently selected file directory",
-      validateInput: (name) => {
-        if (name.includes("..")) {
+      placeHolder: `<${filePathPrefix}file_name> or <path/to/${filePathPrefix}file>`,
+      prompt: `Enter the ${filePrefix}file name. If the name contains \`/\`, a subdirectory will be created. The new file will be created relative to the currently selected file directory`,
+      validateInput: (name: string) => {
+        if (name.includes("..") && isPart) {
           return {
             message: `The file name can't contain '..' so part file can be only in the sub folder.`,
             severity: vscode.InputBoxValidationSeverity.Error,
           }
         }
-        if (name.includes(" ")) {
+        let filePath = name.includes(" ") ? formatPartName(name) : name.length > 0 && !name.trim().endsWith('.dart') ? `${name}.dart` : null
+        if (filePath) {
           return {
-            message: `The file name will be '${formatPartName(name)}'`,
-            severity: vscode.InputBoxValidationSeverity.Info,
-          }
-        }
-        if (name.length > 0 && !name.trim().endsWith('.dart')) {
-          return {
-            message: `The file name will be '${name}.dart'`,
+            message: `The file path will be './${filePath}'`,
             severity: vscode.InputBoxValidationSeverity.Info,
           }
         }
@@ -60,10 +57,10 @@ export function formatPartName(name: string) {
   return formattedName
 }
 
-export async function getPartUri(partName: string, workingDirectoryUri: vscode.Uri) {
-  let partUri = vscode.Uri.joinPath(workingDirectoryUri, partName)
+export async function buildDartFileUri(name: string, workingDirectoryUri: vscode.Uri) {
+  let partUri = vscode.Uri.joinPath(workingDirectoryUri, name)
   if (await fileExists(partUri)) {
-    const errorMessage = `The part '${path.basename(partName)}' already exists.`
+    const errorMessage = `The '${path.basename(name)}' file already exists.`
     vscode.window.showErrorMessage(errorMessage)
     throw Error(errorMessage)
   }
@@ -71,16 +68,21 @@ export async function getPartUri(partName: string, workingDirectoryUri: vscode.U
   return partUri
 }
 
-export async function createPartFile(partUri: vscode.Uri, partPath: string, dartFileName: string) {
-  fs.mkdirSync(path.dirname(partUri.fsPath), { recursive: true })
+export async function createDartFile(args: { fileUri: vscode.Uri, part?: { filePath: string, partOfFileName: string } }) {
+  let part = args.part
+  fs.mkdirSync(path.dirname(args.fileUri.fsPath), { recursive: true })
 
-  let file = await fs.promises.open(partUri.fsPath, "w")
+  let file = await fs.promises.open(args.fileUri.fsPath, "w")
 
-  let splitter = process.platform === "win32" ? "\\" : "/"
-  let splittedPartNamePath = partPath.split(splitter)
-  splittedPartNamePath.pop()
-  let partOfName = [...splittedPartNamePath.map((_) => '..'), dartFileName].join(splitter)
-  await file.write(`part of '${partOfName}';\n`)
+  if (part) {
+    let splitter = process.platform === "win32" ? "\\" : "/"
+    let splittedPartNamePath = part.filePath.split(splitter)
+    splittedPartNamePath.pop()
+    let partOfName = [...splittedPartNamePath.map((_) => '..'), part.partOfFileName].join(splitter)
+    await file.write(`part of '${partOfName}';\n`)
+  } else {
+    await file.write("")
+  }
   await file.close()
 }
 

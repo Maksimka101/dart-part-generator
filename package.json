@@ -5,7 +5,7 @@
   "repository": {
     "url": "https://github.com/Maksimka101/dart-part-generator"
   },
-  "version": "0.1.1",
+  "version": "0.2.0",
   "engines": {
     "vscode": "^1.73.0"
   },
@@ -14,15 +14,17 @@
     "Snippets",
     "Programming Languages"
   ],
-  "activationEvents": [
-    "onCommand:dart-part-generator.createPart"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "dart-part-generator.createPart",
         "title": "New Dart part file"
+      },
+      {
+        "command": "dart-part-generator.createFile",
+        "title": "New Dart file"
       }
     ]
   },
